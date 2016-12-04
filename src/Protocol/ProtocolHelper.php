@@ -16,7 +16,7 @@ use phpseclib\Math\BigInteger;
 /**
  * @author Beniamin Jonatan Šimko <spam@simko.it>
  */
-class Calculator
+class ProtocolHelper
 {
     /**
      * @var ProtocolFacade
@@ -54,7 +54,7 @@ class Calculator
     /**
      * @param ProtocolFacade $facade
      *
-     * @return Calculator
+     * @return ProtocolHelper
      */
     public static function createDefault(ProtocolFacade $facade)
     {
@@ -85,9 +85,12 @@ PRIME;
         return new self($facade, $prime, $generatorModulo);
     }
 
+    /**
+     * @return BigInteger
+     */
     public function generateSalt()
     {
-        return new BigInteger($this->facade->random(), '16');
+        return $this->facade->random();
     }
 
     /**
@@ -134,17 +137,15 @@ PRIME;
     }
 
     /**
-     * @param string $salt
-     * @param string $username
-     * @param string $password
+     * @param BigInteger $salt
+     * @param string     $username
+     * @param string     $password
      *
      * @return BigInteger
      */
-    public function computeCredentialsHash($salt, $username, $password)
+    public function computeCredentialsHash(BigInteger $salt, $username, $password)
     {
-        $hash = $this->facade->hash($salt . $username . $password);
-
-        return new BigInteger($hash, 16);
+        return $this->facade->hash($salt . $username . $password);
     }
 
     /**

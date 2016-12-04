@@ -9,14 +9,12 @@
  * file that was distributed with this source code.
  */
 
-namespace Phuria\ZeroAuth\UserProvider;
-
-use Phuria\ZeroAuth\Protocol\Calculator;
+namespace Phuria\ZeroAuth\Credential;
 
 /**
  * @author Beniamin Jonatan Šimko <spam@simko.it>
  */
-class UserProvider implements UserProviderInterface
+class PublicCredential
 {
     /**
      * @var string
@@ -33,9 +31,16 @@ class UserProvider implements UserProviderInterface
      */
     private $verifier;
 
+    /**
+     * @param Calculator $calculator
+     * @param string     $username
+     * @param            $password
+     *
+     * @return UserProvider
+     */
     public function createFromCredentials(Calculator $calculator, $username, $password)
     {
-        $salt = $calculator->generateSalt();
+
     }
 
     /**

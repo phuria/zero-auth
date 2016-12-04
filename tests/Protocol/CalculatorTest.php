@@ -13,7 +13,7 @@ namespace Phuria\ZeroAuth\Tests\Protocol;
 
 use phpseclib\Math\BigInteger;
 use Phuria\ZeroAuth\HashGenerator\Sha512Generator;
-use Phuria\ZeroAuth\Protocol\Calculator;
+use Phuria\ZeroAuth\Protocol\ProtocolHelper;
 use Phuria\ZeroAuth\Protocol\KeyPair;
 use Phuria\ZeroAuth\Protocol\ProtocolFacade;
 use Phuria\ZeroAuth\RandomGenerator\RandomBytesGenerator;
@@ -24,7 +24,7 @@ use Phuria\ZeroAuth\RandomGenerator\RandomBytesGenerator;
 class CalculatorTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @return Calculator
+     * @return ProtocolHelper
      */
     private function createTestCalculator()
     {
@@ -32,7 +32,7 @@ class CalculatorTest extends \PHPUnit_Framework_TestCase
         $randomGenerator = new RandomBytesGenerator();
         $facade = new ProtocolFacade($hashGenerator, $randomGenerator);
 
-        return Calculator::createDefault($facade);
+        return ProtocolHelper::createDefault($facade);
     }
 
     /**
