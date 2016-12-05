@@ -9,14 +9,18 @@
  * file that was distributed with this source code.
  */
 
-namespace Phuria\ZeroAuth\Tests;
+namespace Phuria\ZeroAuth\HashGenerator;
 
 /**
  * @author Beniamin Jonatan Šimko <spam@simko.it>
  */
-class ProtocolProcessTest extends \PHPUnit_Framework_TestCase
+class Sha1Generator implements HashGeneratorInterface
 {
-    public function test()
+    /**
+     * @inheritdoc
+     */
+    public function generate($data)
     {
+        return hash('sha1', $data);
     }
 }

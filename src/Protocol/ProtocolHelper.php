@@ -56,31 +56,50 @@ class ProtocolHelper
      *
      * @return ProtocolHelper
      */
-    public static function createDefault(ProtocolFacade $facade)
+    public static function create1024(ProtocolFacade $facade)
     {
         $prime = <<<PRIME
-99497054337086473442435202604522816989643863571126408511774020575773849326355529
-17868662949815133641650251664564169951681314039489794063656164654594775323230145
-36035832232680856136472337680816457276690373943856965228203015358880418155595134
-08036145123870584325525813950487109647770743827362571822870567643040184723115825
-64559038631337706711263814925317184391478006513737344622240632295356912477148010
-13631809664480998822924534523954282708757325363115392661151164907049401641924177
-44919250000894727407937229829300578253427884494358459949535231819781361449649779
-25294809990982164220748551480576828811558340914896987579052396187875312497268117
-99442346410169600118157888474366101927045516370344725523198203365320145614120288
-20492176940418377074274389149924303484945446105121267538061583299291707972378807
-39501603076544065560175910937056452264798915612180427301226601178345110223008138
-04019513835829871495782299408181815140463148193132063213759733367850235654431013
-05633127610230549588655605951332351485641757542611227108073263889434409595976835
-13741218702534963950440406165465375534916268062929055164415338276068186229467741
-49890474919227957072109204378111367127944834964373559808334633295928381401578031
-82055197821702739206310971006260383262542900044072533196137796552746439051760940
-43008237564115012981796018302808101097878090244173368097771481354343875254613637
-5675139915776
+EEAF0AB9 ADB38DD6 9C33F80A FA8FC5E8 60726187 75FF3C0B 9EA2314C
+9C256576 D674DF74 96EA81D3 383B4813 D692C6E0 E0D5D8E2 50B98BE4
+8E495C1D 6089DAD1 5DC7D7B4 6154D6B6 CE8EF4AD 69B15D49 82559B29
+7BCF1885 C529F566 660E57EC 68EDBC3C 05726CC0 2FD4CBF4 976EAA9A
+FD5138FE 8376435B 9FC61D2F C0EB06E3  
 PRIME;
 
-        $prime = new BigInteger(str_replace(PHP_EOL, '', $prime), '10');
-        $generatorModulo = new BigInteger('2', 16);
+        return static::create($facade, $prime, '2');
+    }
+
+    /**
+     * @param ProtocolFacade $facade
+     *
+     * @return ProtocolHelper
+     */
+    public static function create1536(ProtocolFacade $facade)
+    {
+        $prime = <<<PRIME
+9DEF3CAF B939277A B1F12A86 17A47BBB DBA51DF4 99AC4C80 BEEEA961
+4B19CC4D 5F4F5F55 6E27CBDE 51C6A94B E4607A29 1558903B A0D0F843
+80B655BB 9A22E8DC DF028A7C EC67F0D0 8134B1C8 B9798914 9B609E0B
+E3BAB63D 47548381 DBC5B1FC 764E3F4B 53DD9DA1 158BFD3E 2B9C8CF5
+6EDF0195 39349627 DB2FD53D 24B7C486 65772E43 7D6C7F8C E442734A
+F7CCB7AE 837C264A E3A9BEB8 7F8A2FE9 B8B5292E 5A021FFF 5E91479E
+8CE7A28C 2442C6F3 15180F93 499A234D CF76E3FE D135F9BB
+PRIME;
+
+        return static::create($facade, $prime, '2');
+    }
+
+    /**
+     * @param ProtocolFacade $facade
+     * @param string         $primeHex
+     * @param string         $generatorHex
+     *
+     * @return ProtocolHelper
+     */
+    private static function create(ProtocolFacade $facade, $primeHex, $generatorHex)
+    {
+        $prime = new BigInteger(str_replace([PHP_EOL, ' '], ['', ''], $primeHex), '16');
+        $generatorModulo = new BigInteger($generatorHex, 16);
 
         return new self($facade, $prime, $generatorModulo);
     }
@@ -91,25 +110,6 @@ PRIME;
     public function generateSalt()
     {
         return $this->facade->random();
-    }
-
-    /**
-     * @param BigInteger $verifier
-     *
-     * @return KeyPair
-     */
-    public function generateServerKeyPair(BigInteger $verifier)
-    {
-        do {
-            $serverPrivateKey = $this->facade->random();
-            $powResult = $this->generatorModulo->powMod($serverPrivateKey, $this->prime);
-            $serverPublicKey = $this->multiplier
-                ->multiply($verifier)
-                ->add($powResult)
-                ->powMod(new BigInteger(1), $this->prime);
-        } while ($serverPublicKey->powMod(new BigInteger(1), $this->prime)->equals(new BigInteger(0)));
-
-        return new KeyPair($serverPrivateKey, $serverPublicKey);
     }
 
     /**
@@ -124,6 +124,26 @@ PRIME;
     }
 
     /**
+     * @param BigInteger $verifier
+     *
+     * @return KeyPair
+     */
+    public function generateServerKeyPair(BigInteger $verifier)
+    {
+        $bigOne = new BigInteger(1);
+        $bigZero = new BigInteger(0);
+
+        do {
+            $serverPrivateKey = $this->facade->random();
+            $serverPublicKey = $this->multiplier->multiply($verifier)->add(
+                $this->generatorModulo->powMod($serverPrivateKey, $this->prime)
+            )->powMod($bigOne, $this->prime);
+        } while ($serverPublicKey->powMod($bigOne, $this->prime)->equals($bigZero));
+
+        return new KeyPair($serverPrivateKey, $serverPublicKey);
+    }
+
+    /**
      * @param BigInteger $prime
      * @param BigInteger $generatorModulo
      *
@@ -131,9 +151,7 @@ PRIME;
      */
     public function computeMultiplier(BigInteger $prime, BigInteger $generatorModulo)
     {
-        $hash = $this->facade->hash($prime->toHex() . $generatorModulo->toHex());
-
-        return new BigInteger($hash, 16);
+        return $this->facade->hash($prime->toHex() . $generatorModulo->toHex());
     }
 
     /**
@@ -145,7 +163,11 @@ PRIME;
      */
     public function computeCredentialsHash(BigInteger $salt, $username, $password)
     {
-        return $this->facade->hash($salt . $username . $password);
+        $saltHex = $salt->toHex();
+        $saltPrefix = 0 !== strlen($saltHex) % 2 ? '0' : '';
+        $usernamePassword = $this->facade->hash("{$username}:{$password}");
+
+        return $this->facade->hash($saltPrefix . $saltHex . $usernamePassword->toHex());
     }
 
     /**
@@ -166,17 +188,99 @@ PRIME;
      */
     public function computeScrambling(BigInteger $publicClientKey, BigInteger $publicServerKey)
     {
-        $hash = $this->facade->hash($publicClientKey->toHex() . $publicServerKey->toHex());
-
-        return new BigInteger($hash, 16);
+        return $this->facade->hash($publicClientKey->toHex() . $publicServerKey->toHex());
     }
 
-    public function computeSessionKey(
+    /**
+     * @param BigInteger $clientPublicKey
+     * @param BigInteger $verifier
+     * @param BigInteger $scrambling
+     * @param BigInteger $serverPrivateKey
+     *
+     * @return BigInteger
+     * @throws \Exception
+     */
+    public function computeServerSessionKey(
         BigInteger $clientPublicKey,
         BigInteger $verifier,
         BigInteger $scrambling,
         BigInteger $serverPrivateKey
     ) {
+        $bigOne = new BigInteger(1);
+        $bigZero = new BigInteger(0);
 
+        if ($clientPublicKey->powMod($bigOne, $this->prime)->equals($bigZero)) {
+            throw new \Exception();
+        }
+
+        if ($serverPrivateKey->powMod($bigOne, $this->prime)->equals($bigZero)) {
+            throw new \Exception();
+        }
+
+        $raw = $clientPublicKey
+            ->multiply(
+                $verifier->powMod($scrambling, $this->prime)
+            )
+            ->powMod($serverPrivateKey, $this->prime);
+
+        return $this->facade->hash($raw->toHex());
+    }
+
+    /**
+     * @param BigInteger $credentialHash
+     * @param BigInteger $serverPublicKey
+     * @param BigInteger $clientPrivateKey
+     * @param BigInteger $scrambling
+     *
+     * @return BigInteger
+     */
+    public function computeClientSessionKey(
+        BigInteger $credentialHash,
+        BigInteger $serverPublicKey,
+        BigInteger $clientPrivateKey,
+        BigInteger $scrambling
+    ) {
+        $raw = $serverPublicKey->subtract(
+            $this->multiplier->multiply(
+                $this->generatorModulo->powMod($credentialHash, $this->prime)
+            )
+        )->powMod(
+            $clientPrivateKey->add($scrambling->multiply($credentialHash)),
+            $this->prime
+        );
+
+        return $this->facade->hash($raw->toHex());
+    }
+
+    /**
+     * @return ProtocolFacade
+     */
+    public function getFacade()
+    {
+        return $this->facade;
+    }
+
+    /**
+     * @return BigInteger
+     */
+    public function getPrime()
+    {
+        return $this->prime;
+    }
+
+    /**
+     * @return BigInteger
+     */
+    public function getGeneratorModulo()
+    {
+        return $this->generatorModulo;
+    }
+
+    /**
+     * @return BigInteger
+     */
+    public function getMultiplier()
+    {
+        return $this->multiplier;
     }
 }

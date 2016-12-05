@@ -11,6 +11,7 @@
 
 namespace Phuria\ZeroAuth\Credential;
 
+use phpseclib\Math\BigInteger;
 use Phuria\ZeroAuth\Protocol\ProtocolHelper;
 
 /**
@@ -31,9 +32,15 @@ class CredentialTransformer
         $this->helper = $helper;
     }
 
-    public function transform(PrivateCredential $credential)
+    /**
+     * @param PrivateCredential $credential
+     * @param BigInteger        $salt
+     *
+     * @return PublicCredential
+     */
+    public function transform(PrivateCredential $credential, BigInteger $salt = null)
     {
-        $salt = $this->helper->generateSalt();
+        $salt = $salt ?: $this->helper->generateSalt();
         $credentialHash = $this->helper->computeCredentialsHash(
             $salt,
             $credential->getUsername(),
@@ -41,6 +48,6 @@ class CredentialTransformer
         );
         $verifier = $this->helper->computeVerifier($credentialHash);
 
-        return new PublicCredential($credential->getUsername(), $salt->toString(), $verifier->toString());
+        return new PublicCredential($credential->getUsername(), $salt, $verifier);
     }
 }

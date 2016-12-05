@@ -11,6 +11,8 @@
 
 namespace Phuria\ZeroAuth\Credential;
 
+use phpseclib\Math\BigInteger;
+
 /**
  * @author Beniamin Jonatan Šimko <spam@simko.it>
  */
@@ -22,33 +24,21 @@ class PublicCredential
     private $username;
 
     /**
-     * @var string
+     * @var BigInteger
      */
     private $salt;
 
     /**
-     * @var string
+     * @var BigInteger
      */
     private $verifier;
 
     /**
-     * @param Calculator $calculator
      * @param string     $username
-     * @param            $password
-     *
-     * @return UserProvider
+     * @param BigInteger $salt
+     * @param BigInteger $verifier
      */
-    public function createFromCredentials(Calculator $calculator, $username, $password)
-    {
-
-    }
-
-    /**
-     * @param string $username
-     * @param string $salt
-     * @param string $verifier
-     */
-    public function __construct($username, $salt, $verifier)
+    public function __construct($username, BigInteger $salt, BigInteger $verifier)
     {
         $this->username = $username;
         $this->salt = $salt;
@@ -56,7 +46,7 @@ class PublicCredential
     }
 
     /**
-     * @inheritdoc
+     * @return string
      */
     public function getUsername()
     {
@@ -64,7 +54,7 @@ class PublicCredential
     }
 
     /**
-     * @inheritdoc
+     * @return BigInteger
      */
     public function getSalt()
     {
@@ -72,7 +62,7 @@ class PublicCredential
     }
 
     /**
-     * @inheritdoc
+     * @return BigInteger
      */
     public function getVerifier()
     {
