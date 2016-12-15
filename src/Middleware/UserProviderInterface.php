@@ -12,30 +12,16 @@
 namespace Phuria\ZeroAuth\Middleware;
 
 use phpseclib\Math\BigInteger;
-use Phuria\ZeroAuth\Protocol\KeyPair;
 
 /**
  * @author Beniamin Jonatan Šimko <spam@simko.it>
  */
-interface SessionInterface
+interface UserProviderInterface
 {
     /**
+     * @param string $username
+     *
      * @return BigInteger
      */
-    public function getSessionKey();
-
-    /**
-     * @param BigInteger $sessionKey
-     */
-    public function setSessionKey(BigInteger $sessionKey);
-
-    /**
-     * @return KeyPair
-     */
-    public function getServerKeyPair();
-
-    /**
-     * @param KeyPair $keyPair
-     */
-    public function setServerKeyPair(KeyPair $keyPair);
+    public function findVerifierByUsername($username);
 }

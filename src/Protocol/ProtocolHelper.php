@@ -252,6 +252,43 @@ PRIME;
         return $this->facade->hash($raw->toHex());
     }
 
+    public function computeClientProof(
+        $username,
+        BigInteger $salt,
+        BigInteger $clientPublicKey,
+        BigInteger $serverPublicKey,
+        BigInteger $sessionKey
+    ) {
+        $primeHash = $this->facade->hash($this->prime->toHex());
+        $generatorHash = $this->facade->hash($this->generatorModulo->toHex());
+
+        return $this->facade->hash(
+            $primeHash->bitwise_xor($generatorHash)
+            . $salt->toHex()
+            . $clientPublicKey->toHex()
+            . $serverPublicKey->toHex()
+            . $sessionKey->toHex()
+        );
+    }
+
+    /**
+     * @param BigInteger $clientPublicKey
+     * @param BigInteger $clientProof
+     * @param BigInteger $sessionKey
+     *
+     * @return BigInteger
+     */
+    public function computeServerProof(
+        BigInteger $clientPublicKey,
+        BigInteger $clientProof,
+        BigInteger $sessionKey
+    )
+    {
+        return $this->facade->hash(
+            $clientPublicKey->toHex() . $clientProof->toHex() . $sessionKey->toHex()
+        );
+    }
+
     /**
      * @return ProtocolFacade
      */
