@@ -28,26 +28,40 @@ class ServerExchangeHandler
     private $helper;
 
     /**
-     * @param ProtocolHelper $helper
+     * @var UserProviderInterface
      */
-    public function __construct(ProtocolHelper $helper)
-    {
+    private $userProvider;
+
+    /**
+     * @var SessionInterface
+     */
+    private $session;
+
+    /**
+     * @param ProtocolHelper        $helper
+     * @param UserProviderInterface $provider
+     * @param SessionInterface      $session
+     */
+    public function __construct(
+        ProtocolHelper $helper,
+        UserProviderInterface $provider,
+        SessionInterface $session
+    ) {
         $this->helper = $helper;
+        $this->userProvider = $provider;
+        $this->session = $session;
     }
 
     /**
      * @param ServerRequestInterface $request
      * @param ResponseInterface      $response
-     * @param callable               $next
      *
      * @return ResponseInterface
      */
-    public function __invoke(ServerRequestInterface $request, ResponseInterface $response, callable $next)
+    public function __invoke(ServerRequestInterface $request, ResponseInterface $response)
     {
-        /** @var UserProviderInterface $userProvider */
-        $userProvider = $request->getAttribute(UserProviderInterface::class);
-        /** @var SessionInterface $session */
-        $session = $request->getAttribute(SessionInterface::class);
+        $userProvider = $this->userProvider;
+        $session = $this->session;
 
         $exchangeData = json_decode($request->getBody(), true);
 

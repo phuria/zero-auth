@@ -11,10 +11,12 @@
 
 namespace Phuria\ZeroAuth\Tests\Integration;
 
+use phpseclib\Math\BigInteger;
 use Phuria\ZeroAuth\Crypto\OpenSLLCrypto;
 use Phuria\ZeroAuth\Middleware\EncryptionHandler;
 use Phuria\ZeroAuth\Middleware\SessionInterface;
 use Phuria\ZeroAuth\RandomGenerator\RandomBytesGenerator;
+use Phuria\ZeroAuth\Tests\Helper\Session;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Zend\Diactoros\Response;
@@ -38,23 +40,22 @@ class EncryptionMiddlewareTest extends \PHPUnit_Framework_TestCase
         $rand = new RandomBytesGenerator();
         $crypto = new OpenSLLCrypto($rand);
         $handler = new EncryptionHandler($crypto);
+        $sessionKey = new BigInteger(static::TEST_SESSION_KEY, 16);
 
         $requestData = json_encode([
             'iv'     => $iv = $crypto->generateIv(static::TEST_CIPHER),
             'cipher' => static::TEST_CIPHER,
-            'data'   => $crypto->encrypt('foo', static::TEST_CIPHER, static::TEST_SESSION_KEY, $iv)
+            'data'   => $crypto->encrypt('foo', static::TEST_CIPHER, $sessionKey->toBytes(), $iv)
         ]);
 
         $stream = new Stream('php://memory', 'rw');
         $stream->write($requestData);
 
+        $session = new Session();
+        $session->setSessionKey($sessionKey);
+
         $request = (new ServerRequest())
-            ->withAttribute(SessionInterface::class, new class implements SessionInterface {
-                public function getSessionKey()
-                {
-                    return EncryptionMiddlewareTest::TEST_SESSION_KEY;
-                }
-            })
+            ->withAttribute(SessionInterface::class, $session)
             ->withBody($stream)
             ->withHeader('Content-Type', 'application/zero-auth');
 
@@ -74,7 +75,7 @@ class EncryptionMiddlewareTest extends \PHPUnit_Framework_TestCase
         static::assertSame('boo', $crypto->decrypt(
             $responseData['data'],
             static::TEST_CIPHER,
-            static::TEST_SESSION_KEY,
+            $sessionKey->toBytes(),
             $responseData['iv']
         ));
     }

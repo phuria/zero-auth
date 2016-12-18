@@ -51,7 +51,7 @@ class EncryptionHandler
         $decrypted = $this->crypto->decrypt(
             $cryptoData['data'],
             $cryptoData['cipher'],
-            $sessionKey,
+            $sessionKey->toBytes(),
             $cryptoData['iv']
         );
 
@@ -65,7 +65,7 @@ class EncryptionHandler
         $cryptoData['data'] = $this->crypto->encrypt(
             $response->getBody(),
             $cryptoData['cipher'],
-            $sessionKey,
+            $sessionKey->toBytes(),
             $cryptoData['iv']
         );
 
