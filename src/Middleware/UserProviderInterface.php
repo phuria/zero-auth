@@ -24,4 +24,11 @@ interface UserProviderInterface
      * @return BigInteger
      */
     public function findVerifierByUsername($username);
+
+    /**
+     * @param string $username
+     *
+     * @return BigInteger
+     */
+    public function findSaltByUsername($username);
 }

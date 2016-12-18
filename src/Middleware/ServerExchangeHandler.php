@@ -67,17 +67,15 @@ class ServerExchangeHandler
 
         $username = $exchangeData['username'];
         $verifier = $userProvider->findVerifierByUsername($username);
+        $exchangeData['verifier'] = $verifier->toHex();
+        $salt = $this->userProvider->findSaltByUsername($username);
+        $exchangeData['salt'] = $salt->toHex();
         $clientPublicKey = new BigInteger($exchangeData['clientPublicKey'], 16);
-
         $stream = new Stream('php://memory');
 
-        if (false === array_key_exists('salt', $exchangeData)) {
-            $salt = $this->helper->generateSalt();
+        if (false === array_key_exists('clientProof', $exchangeData)) {
             $keyPair = $this->helper->generateServerKeyPair($verifier);
-
             $session->setServerKeyPair($keyPair);
-
-            $exchangeData['salt'] = $salt->toHex();
             $exchangeData['serverPublicKey'] = $keyPair->getPublicKey()->toHex();
 
             return $response->withBody($stream->write(json_encode($exchangeData)));
