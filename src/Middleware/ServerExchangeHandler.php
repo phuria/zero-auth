@@ -63,7 +63,7 @@ class ServerExchangeHandler
         $userProvider = $this->userProvider;
         $session = $this->session;
 
-        $exchangeData = json_decode($request->getBody(), true);
+        $exchangeData = $request->getQueryParams();
 
         $username = $exchangeData['username'];
         $verifier = $userProvider->findVerifierByUsername($username);
