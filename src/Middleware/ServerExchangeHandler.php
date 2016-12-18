@@ -71,14 +71,14 @@ class ServerExchangeHandler
         $salt = $this->userProvider->findSaltByUsername($username);
         $exchangeData['salt'] = $salt->toHex();
         $clientPublicKey = new BigInteger($exchangeData['clientPublicKey'], 16);
-        $stream = new Stream('php://memory');
 
         if (false === array_key_exists('clientProof', $exchangeData)) {
             $keyPair = $this->helper->generateServerKeyPair($verifier);
             $session->setServerKeyPair($keyPair);
             $exchangeData['serverPublicKey'] = $keyPair->getPublicKey()->toHex();
+            $response->getBody()->write(json_encode($exchangeData));
 
-            return $response->withBody($stream->write(json_encode($exchangeData)));
+            return $response;
         }
 
         $keyPair = $session->getServerKeyPair();
@@ -113,6 +113,8 @@ class ServerExchangeHandler
 
         $session->setSessionKey($sessionKey);
 
-        return $response->withBody($stream->write(json_encode($exchangeData)));
+        $response->getBody()->write(json_encode($exchangeData));
+
+        return $response;
     }
 }
